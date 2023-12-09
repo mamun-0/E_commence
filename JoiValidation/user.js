@@ -6,7 +6,13 @@ const validateUser = (user) => {
     password: Joi.string().min(5).max(255).required(),
   }).validate(user);
 };
-
+const validateSignIn = (user) => {
+  return Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().required(),
+  }).validate(user);
+};
 module.exports = {
   validateUser,
+  validateSignIn,
 };
