@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const { signUp, signIn } = require("../controllers/userController");
-
-router.route("/signup").post(signUp);
-router.route("/signin").post(signIn);
+const wrapAsync = require("../Util/wrapAsync");
+router.route("/signup").post(wrapAsync(signUp));
+router.route("/signin").post(wrapAsync(signIn));
 
 module.exports = router;
