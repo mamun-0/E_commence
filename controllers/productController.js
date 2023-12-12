@@ -40,14 +40,18 @@ module.exports.createProduct = async (req, res) => {
   });
 };
 module.exports.getProducts = async (req, res) => {
+  //Query params
+  // /api/product?order=desc&sortBy=name&limit=5
+  let { order, sortBy, limit } = req.query;
+  order = order === "desc" ? -1 : 1;
+  sortBy = sortBy ? sortBy : "_id";
+  limit = limit ? parseInt(limit) : 10;
   const findProducts = await Product.find({})
     .select({
-      _id: 1,
-      name: 1,
-      description: 1,
-      category: 1,
-      quantity: 1,
+      photo: 0,
     })
+    .sort({ [sortBy]: order })
+    .limit(limit)
     .populate("category", "name");
   return res.status(200).send(findProducts);
 };
