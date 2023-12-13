@@ -6,7 +6,7 @@ const Product = require("../models/product");
 
 module.exports.createProduct = async (req, res) => {
   const form = new formidable.IncomingForm();
-  form.keepExtension = true;
+  form.keepExtensions = true;
   form.parse(req, (err, fields, files) => {
     if (err) return res.status(400).send("Something went wrong!");
     const { error } = productValidation(
@@ -46,14 +46,28 @@ module.exports.getProducts = async (req, res) => {
   order = order === "desc" ? -1 : 1;
   sortBy = sortBy ? sortBy : "_id";
   limit = limit ? parseInt(limit) : 10;
-  const findProducts = await Product.find({})
+  const foundProducts = await Product.find({})
     .select({
       photo: 0,
     })
     .sort({ [sortBy]: order })
     .limit(limit)
     .populate("category", "name");
-  return res.status(200).send(findProducts);
+  return res.status(200).send(foundProducts);
 };
-module.exports.getProductById = async (req, res) => {};
+module.exports.getProductById = async (req, res) => {
+  const { id } = req.params;
+  const foundProduct = await Product.findById(id)
+    .select({ photo: 0 })
+    .populate("category", "name");
+  if (!foundProduct) return res.status(404).send("Product not found!");
+  return res.status(200).send(foundProduct);
+};
+module.exports.getPhoto = async (req, res) => {
+  const { id } = req.params;
+  const foundPhoto = await Product.findById(id).select({ photo: 1, _id: 0 });
+  if (!foundPhoto) return res.status(404).send("No photo found!");
+  res.set("Content-Type", foundPhoto.photo.contentType);
+  return res.status(200).send(foundPhoto.photo.data);
+};
 module.exports.updateProductById = async (req, res) => {};

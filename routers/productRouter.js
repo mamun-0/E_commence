@@ -7,6 +7,7 @@ const {
   createProduct,
   getProducts,
   getProductById,
+  getPhoto,
   updateProductById,
 } = require("../controllers/productController");
 
@@ -15,6 +16,7 @@ router
   .post([authorize, admin], wrapAsync(createProduct))
   .get(wrapAsync(getProducts));
 
+router.route("/photo/:id").get(wrapAsync(getPhoto));
 router
   .route("/:id")
   .get(wrapAsync(getProductById))
