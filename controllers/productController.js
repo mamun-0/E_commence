@@ -71,33 +71,66 @@ module.exports.getPhoto = async (req, res) => {
 };
 module.exports.updateProductById = async (req, res) => {
   const productId = req.params.id;
-    const product = await Product.findById(productId);
-    let form = new formidable.IncomingForm();
-    form.keepExtensions = true;
-    form.parse(req, (err, fields, files) => {
-        if (err) return res.status(400).send("Something wrong!");
-        const updatedFields = _.pick(fields, ["name", "description", "price", "category", "quantity"]);
-        _.assignIn(product, updatedFields);
+  const product = await Product.findById(productId);
+  let form = new formidable.IncomingForm();
+  form.keepExtensions = true;
+  form.parse(req, (err, fields, files) => {
+    if (err) return res.status(400).send("Something wrong!");
+    const updatedFields = _.pick(fields, [
+      "name",
+      "description",
+      "price",
+      "category",
+      "quantity",
+    ]);
+    _.assignIn(product, updatedFields);
 
-        if (files.photo) {
-            fs.readFile(files.photo.path, (err, data) => {
-                if (err) return res.status(400).send("Something wrong!");
-                product.photo.data = data;
-                product.photo.contentType = files.photo.type;
-                product.save((err, result) => {
-                    if (err) return res.status(500).send("Something failed!");
-                    else return res.status(200).send({
-                        message: "Product Updated Successfully!"
-                    })
-                })
-            })
-        } else {
-            product.save((err, result) => {
-                if (err) return res.status(500).send("Something failed!");
-                else return res.status(200).send({
-                    message: "Product Updated Successfully!"
-                })
-            })
-        }
-    })
+    if (files.photo) {
+      fs.readFile(files.photo.path, (err, data) => {
+        if (err) return res.status(400).send("Something wrong!");
+        product.photo.data = data;
+        product.photo.contentType = files.photo.type;
+        product.save((err, result) => {
+          if (err) return res.status(500).send("Something failed!");
+          else
+            return res.status(200).send({
+              message: "Product Updated Successfully!",
+            });
+        });
+      });
+    } else {
+      product.save((err, result) => {
+        if (err) return res.status(500).send("Something failed!");
+        else
+          return res.status(200).send({
+            message: "Product Updated Successfully!",
+          });
+      });
+    }
+  });
+};
+
+module.exports.filterProducts = async (req, res) => {
+  let { order, sortBy, limit, filters, skip = 0 } = req.body;
+  order = order === "desc" ? -1 : 1;
+  sortBy = sortBy ? sortBy : "_id";
+  limit = limit ? parseInt(limit) : 10;
+  skip = parseInt(skip);
+
+  const filterObject = {};
+  for (let key in filters) {
+    if (key === "price") {
+      filterObject.price = { $gte: filters[key][0], $lte: filters[key][1] };
+    }
+    if (key === "category") {
+      filterObject.category = { $in: filters[key] };
+    }
+  }
+  const products = await Product.find(filterObject)
+    .select({ photo: 0 })
+    .populate("category", "name")
+    .sort({ [sortBy]: order })
+    .skip(skip)
+    .limit(limit);
+  return res.status(200).send(products);
 };
